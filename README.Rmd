@@ -1,0 +1,69 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+Inspect which packages use licenses recommended for data and see if they are, indeed, enriched for data packages, whatever that means.
+
+https://choosealicense.com/non-software/
+
+```{r}
+library(jsonlite)
+library(tidyverse)
+library(forcats)
+library(httr)
+
+# dump <- GET("http://crandb.r-pkg.org/-/latest")
+# ct <- content(dump)
+# 
+# ct %>%
+#   toJSON() %>%
+#   write_file("cran-packages.json")
+
+ct <- fromJSON("cran-packages.json")
+
+str(ct[[1]])
+length(ct)
+
+## CC licenses interest me and I'm curious about 'Unlimited""
+## assuming that a data package unlikely to need compilation
+dp <- keep(
+  ct,
+  ~ grepl("Unlimited|CC", .x$License) && .x$NeedsCompilation == "no"
+)
+length(dp)
+
+df <- tibble(
+  license = map_chr(dp, "License"),
+  name = map_chr(dp, "Package"),
+  title = map_chr(dp, "Title"),
+  desc = map_chr(dp, "Description"),
+  url = map(dp, "URL"),
+  pkg = dp
+) %>% 
+  mutate(license = fct_infreq(license)) %>% 
+  arrange(license, name)
+      
+df %>% 
+  count(license, sort = TRUE)
+```
+
+```{r results='asis'}
+f <- function(..., sep = "  \n") cat(paste(..., sep = sep), "\n\n")
+df %>% 
+  select(-pkg) %>% 
+  mutate(license = as.character(license)) %>% 
+  pwalk(f)
+#x <- df[2, ]
+#cat(paste(x$license, x$name, x$title, x$desc, x$url, sep = "  \n"))
+```
+
