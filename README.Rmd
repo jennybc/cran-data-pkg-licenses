@@ -58,7 +58,7 @@ df %>%
 ```
 
 ```{r results='asis'}
-f <- function(..., sep = "  \n") cat(paste(..., sep = sep), "\n\n")
+f <- function(..., sep = " | ") cat(paste(..., sep = sep), "\n\n")
 df %>% 
   select(-pkg) %>% 
   mutate(license = as.character(license)) %>% 
